@@ -10,6 +10,9 @@ import Foundation
 import Cocoa
 import JaredFramework
 import Contacts
+import OpenAIKit
+import NIO
+import AsyncHTTPClient
 
 enum IntervalType: String {
     case Minute
@@ -36,6 +39,9 @@ class CoreModule: RoutingModule {
     let scheduleCheckInterval = 30.0 * 60.0
     var sender: MessageSender
     var timer: Timer!
+    var apiKey: String = ""
+    var org: String = ""
+    var openAIClient: OpenAIKit.Client
     
     var persistentContainer: PersistentContainer = {
         let container = PersistentContainer(name: "CoreModule")
@@ -49,26 +55,17 @@ class CoreModule: RoutingModule {
     
     required public init(sender: MessageSender) {
         self.sender = sender
+        
+        //open ai gpt service
+        let configutation = Configuration(apiKey: self.apiKey, organization: self.org)
+        let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: 1)
+        let httpClient = HTTPClient(eventLoopGroupProvider: .shared(eventLoopGroup))
+        self.openAIClient = OpenAIKit.Client(httpClient: httpClient, configuration: configutation)
+        
         let appsupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("Jared").appendingPathComponent("CoreModule")
         try! FileManager.default.createDirectory(at: appsupport, withIntermediateDirectories: true, attributes: nil)
-        
-        let ping = Route(name:"/ping", comparisons: [.startsWith: ["/ping"]], call: {[weak self] in self?.pingCall($0)}, description: NSLocalizedString("pingDescription"))
-        
-        let thankYou = Route(name:"Thank You", comparisons: [.startsWith: [NSLocalizedString("ThanksJaredCommand")]], call: {[weak self] in self?.thanksJared($0)}, description: NSLocalizedString("ThanksJaredResponse"))
-        
-        let version = Route(name: "/version", comparisons: [.startsWith: ["/version"]], call: {[weak self] in self?.getVersion($0)}, description: "Get the version of Jared running")
-        
-        let whoami = Route(name: "/whoami", comparisons: [.startsWith: ["/whoami"]], call: {[weak self] in self?.getWho($0)}, description: "Get your name")
-        
-        let send = Route(name: "/send", comparisons: [.startsWith: ["/send"]], call: {[weak self] in self?.sendRepeat($0)}, description: NSLocalizedString("sendDescription"),parameterSyntax: NSLocalizedString("sendSyntax"))
-        
-        let name = Route(name: "/name", comparisons: [.startsWith: ["/name"]], call: {[weak self] in self?.changeName($0)}, description: "Change what Jared calls you", parameterSyntax: "/name,[your preferred name]")
-        
-        let schedule = Route(name: "/schedule", comparisons: [.startsWith: ["/schedule"]], call: {[weak self] in self?.schedule($0)}, description: NSLocalizedString("scheduleDescription"), parameterSyntax: "Must be one of these type of inputs: /schedule,add,1,Week,5,full Message\n/schedule,delete,1\n/schedule,list")
-        
-        let barf = Route(name: "/barf", comparisons: [.startsWith: ["/barf"]], call: {[weak self] in self?.barf($0)}, description: NSLocalizedString("barfDescription"))
-        
-        routes = [ping, thankYou, version, send, whoami, name, schedule, barf]
+        let ask = Route(name:"ask GPT", comparisons: [.startsWith: [""]], call: {[weak self] in self?.askGPT($0)}, description: NSLocalizedString("ask gpt"))
+        routes = [ask]
         
         //Launch background thread that will check for scheduled messages to send
         timer = Timer.scheduledTimer(withTimeInterval: 10, repeats: true, block: {[weak self] (theTimer) in
@@ -79,6 +76,35 @@ class CoreModule: RoutingModule {
     deinit {
         timer.invalidate()
     }
+    
+    func askGPT(_ message: Message) -> Void {
+        @Sendable func performCompletion() async -> String{
+            var response: String = ""
+            do {
+                let inputs = message.getTextBody() ?? ""
+                let completion = try await self.openAIClient.chats.create(
+                    model: Model.GPT3.gpt3_5Turbo,
+                    messages: [.user(content: inputs)],
+                    maxTokens: 2048
+                )
+                
+                response = completion.choices[0].message.content
+            } catch {
+                // Handle the error
+                print("Error: \(error)")
+                response = "An error occured during processing your message"
+            }
+            
+            return response
+        }
+        
+        // Use a Task to call performCompletion and send the response
+        Task {
+            let response = await performCompletion()
+            sender.send(response, to: message.RespondTo())
+        }
+    }
+
     
     
     func pingCall(_ incoming: Message) -> Void {

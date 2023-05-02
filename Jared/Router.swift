@@ -12,10 +12,12 @@ import JaredFramework
 class Router : RouterDelegate {
     var pluginManager: PluginManagerDelegate
     var messageDelegates: [MessageDelegate]
+    var allowedUsers: [String]
     
     init(pluginManager: PluginManagerDelegate, messageDelegates: [MessageDelegate]) {
         self.pluginManager = pluginManager
         self.messageDelegates = messageDelegates
+        self.allowedUsers = [""]
     }
     
     func route(message myMessage: Message) {
@@ -23,6 +25,10 @@ class Router : RouterDelegate {
         
         // Currently don't process any images
         guard let messageText = myMessage.body as? TextBody else {
+            return
+        }
+        
+        if (!self.allowedUsers.contains(myMessage.sender.handle)) {
             return
         }
         

@@ -6,6 +6,6 @@ framework module JaredFramework {
 }
 
 module JaredFramework.Swift {
-    header "JaredFramework-Swift.h"
-    requires objc
+  header "JaredFramework-Swift.h"
+  requires objc
 }
