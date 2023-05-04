@@ -87,3 +87,25 @@ Jared contains a web server with a REST API that can be enabled. This allows you
 Jared reads from the Messages database on a set interval and queries for new messages. It provides a routing framework for actioning on messages, and uses AppleScript to send outgoing messages. It's also multi-threaded so it can take care of multiple requests at once. Jared allows expansion via `.bundle` plugin files, webhooks, and a REST API. This allows commands to be added without modifying the main Jared code base. 
 
 I've tried using private APIs such as MessagesKit to send/receive messages to no avail so far. If you have any leads on this front I'd love to hear about it. 
+
+
+## use Jared with chatgpt
+You need to add a config.json at path: /Library/Application Support/Jared/config.json
+An example config.json looks like:
+```json
+{
+    "routes": {
+    },
+    "webhooks": [
+    ],
+    "webServer": {
+        "port": 3005
+    },
+    "apiKey": "sk-your-apikey",
+    "organization":"your-org",
+    "allowedSenders": ["your icloud account,"], // phone number or email
+    "useGPT4": false // set to true, if you have gpt4 api enabled and want to use it
+}
+```
+
+Use command /clear to clear your chat history save in the memory
