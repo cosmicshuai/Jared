@@ -5,5 +5,8 @@
     ],
     "webServer": {
         "port": 3005
-    }
+    },
+    "apiKey": "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",
+    "organization":"org-vG4NWqTslcN6xhAGfWbdiTG6",
+    "allowedSenders": ["+17819219544"]
 }

@@ -32,6 +32,29 @@ let intervalSeconds: [IntervalType: Double] =
     ]
 
 class CoreModule: RoutingModule {
+    required init(sender: MessageSender) {
+        self.sender = sender
+        
+        //open ai gpt service
+        self.apiKey = ""
+        self.org = ""
+        let configutation = Configuration(apiKey: self.apiKey, organization: self.org)
+        let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: 1)
+        let httpClient = HTTPClient(eventLoopGroupProvider: .shared(eventLoopGroup))
+        self.openAIClient = OpenAIKit.Client(httpClient: httpClient, configuration: configutation)
+        let appsupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("Jared").appendingPathComponent("CoreModule")
+        try! FileManager.default.createDirectory(at: appsupport, withIntermediateDirectories: true, attributes: nil)
+        let clear = Route(name:"Clear chat history", comparisons: [.startsWith: ["/clear"]], call: {[weak self] in self?.clear($0)}, description: NSLocalizedString("clear user's chat history"))
+        let ask = Route(name:"ask GPT", comparisons: [.startsWith: [""]], call: {[weak self] in self?.askGPT($0)}, description: NSLocalizedString("ask gpt"))
+        routes = [clear, ask]
+        
+        //Launch background thread that will check for scheduled messages to send
+        timer = Timer.scheduledTimer(withTimeInterval: 10, repeats: true, block: {[weak self] (theTimer) in
+            self?.scheduleThread()
+        })
+
+    }
+    
     var description: String = NSLocalizedString("CoreDescription")
     var routes: [Route] = []
     let MAXIMUM_CONCURRENT_SENDS = 3
@@ -39,9 +62,10 @@ class CoreModule: RoutingModule {
     let scheduleCheckInterval = 30.0 * 60.0
     var sender: MessageSender
     var timer: Timer!
-    var apiKey: String = ""
-    var org: String = ""
+    var apiKey: String
+    var org: String
     var openAIClient: OpenAIKit.Client
+    static var chatHistory: [String:[Chat.Message]] = [:]
     
     var persistentContainer: PersistentContainer = {
         let container = PersistentContainer(name: "CoreModule")
@@ -53,19 +77,21 @@ class CoreModule: RoutingModule {
         return container
     }()
     
-    required public init(sender: MessageSender) {
+    required public init(sender: MessageSender, configuration: ConfigurationFile) {
         self.sender = sender
         
         //open ai gpt service
+        self.apiKey = configuration.apiKey
+        self.org = configuration.organization
         let configutation = Configuration(apiKey: self.apiKey, organization: self.org)
         let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: 1)
         let httpClient = HTTPClient(eventLoopGroupProvider: .shared(eventLoopGroup))
         self.openAIClient = OpenAIKit.Client(httpClient: httpClient, configuration: configutation)
-        
         let appsupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("Jared").appendingPathComponent("CoreModule")
         try! FileManager.default.createDirectory(at: appsupport, withIntermediateDirectories: true, attributes: nil)
+        let clear = Route(name:"clear history", comparisons: [.startsWith: ["/clear"]], call: {[weak self] in self?.clear($0)}, description: NSLocalizedString("clear chat history"))
         let ask = Route(name:"ask GPT", comparisons: [.startsWith: [""]], call: {[weak self] in self?.askGPT($0)}, description: NSLocalizedString("ask gpt"))
-        routes = [ask]
+        routes = [clear, ask]
         
         //Launch background thread that will check for scheduled messages to send
         timer = Timer.scheduledTimer(withTimeInterval: 10, repeats: true, block: {[weak self] (theTimer) in
@@ -80,15 +106,19 @@ class CoreModule: RoutingModule {
     func askGPT(_ message: Message) -> Void {
         @Sendable func performCompletion() async -> String{
             var response: String = ""
+            let handler = message.sender.handle
+            var history = CoreModule.chatHistory[handler] ?? []
+            history.append(Chat.Message.user(content: message.getTextBody() ?? ""))
             do {
-                let inputs = message.getTextBody() ?? ""
                 let completion = try await self.openAIClient.chats.create(
-                    model: Model.GPT3.gpt3_5Turbo,
-                    messages: [.user(content: inputs)],
+                    model: Model.GPT4.gpt4,
+                    messages: history,
                     maxTokens: 2048
                 )
                 
                 response = completion.choices[0].message.content
+                history.append(Chat.Message.assistant(content: response))
+                CoreModule.chatHistory[handler] = history
             } catch {
                 // Handle the error
                 print("Error: \(error)")
@@ -105,10 +135,14 @@ class CoreModule: RoutingModule {
         }
     }
 
-    
+    func clear(_ incoming: Message) -> Void {
+        var handler = incoming.sender.handle
+        CoreModule.chatHistory[handler] = []
+        sender.send(NSLocalizedString("Your chat history has been cleared"), to: incoming.RespondTo())
+    }
     
     func pingCall(_ incoming: Message) -> Void {
-        sender.send(NSLocalizedString("PongResponse"), to: incoming.RespondTo())
+        
     }
     
     func barf(_ incoming: Message) -> Void {

@@ -31,7 +31,7 @@ struct ConfigurationHelper {
     
     static func getSupportDirectory() -> URL {
         let filemanager = FileManager.default
-        let appsupport = filemanager.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        let appsupport = filemanager.urls(for: .applicationSupportDirectory, in: .localDomainMask)[0]
         let supportDir = appsupport.appendingPathComponent("Jared")
         
         try! filemanager.createDirectory(at: supportDir, withIntermediateDirectories: true, attributes: nil)

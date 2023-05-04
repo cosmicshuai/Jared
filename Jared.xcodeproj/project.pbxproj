@@ -21,7 +21,6 @@
 		B319235824DD319D001904BA /* InternalModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3BF17C3244EBF4900CC44C5 /* InternalModule.swift */; };
 		B319236224DE76A2001904BA /* JaredUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B319236124DE76A2001904BA /* JaredUITests.swift */; };
 		B32DE51524D51F9C00AB3A71 /* RouterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B32DE51424D51F9C00AB3A71 /* RouterTests.swift */; };
-		B32DE51624D522DA00AB3A71 /* Router.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3BF17C1244EBE9A00CC44C5 /* Router.swift */; };
 		B32DE51824D5231800AB3A71 /* PluginManagerDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3BF17C7244EC89200CC44C5 /* PluginManagerDelegate.swift */; };
 		B32DE51A24D5524300AB3A71 /* Action.swift in Sources */ = {isa = PBXBuildFile; fileRef = B32DE51924D5524300AB3A71 /* Action.swift */; };
 		B32DE51C24D552D300AB3A71 /* MockPluginManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B32DE51B24D552D300AB3A71 /* MockPluginManager.swift */; };
@@ -755,7 +754,6 @@
 				B3B844C024D8F91900DC162A /* DatabaseHandlerTest.swift in Sources */,
 				B32DE51824D5231800AB3A71 /* PluginManagerDelegate.swift in Sources */,
 				B3B7E52524EA00BC00A3FBD1 /* JaredConstants.swift in Sources */,
-				B32DE51624D522DA00AB3A71 /* Router.swift in Sources */,
 				B3BF17CA244FDA3F00CC44C5 /* MessageDelegate.swift in Sources */,
 				B3B844C524D9288000DC162A /* RouterDelegate.swift in Sources */,
 				B3B844B824D7791800DC162A /* ActionTypeTest.swift in Sources */,

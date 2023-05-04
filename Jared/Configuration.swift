@@ -12,11 +12,17 @@ struct ConfigurationFile: Decodable {
     let routes: [String: RouteConfiguration]
     let webhooks: [Webhook]
     let webServer: WebserverConfiguration
+    let apiKey: String
+    let organization:String
+    let allowedSenders: [String]
     
     init() {
         routes = [:]
         webhooks = []
         webServer = WebserverConfiguration(port: 3000)
+        apiKey = ""
+        organization = ""
+        allowedSenders = []
     }
 }
 

@@ -14,10 +14,10 @@ class Router : RouterDelegate {
     var messageDelegates: [MessageDelegate]
     var allowedUsers: [String]
     
-    init(pluginManager: PluginManagerDelegate, messageDelegates: [MessageDelegate]) {
+    init(pluginManager: PluginManagerDelegate, messageDelegates: [MessageDelegate], configuration: ConfigurationFile) {
         self.pluginManager = pluginManager
         self.messageDelegates = messageDelegates
-        self.allowedUsers = [""]
+        self.allowedUsers = configuration.allowedSenders
     }
     
     func route(message myMessage: Message) {

@@ -27,14 +27,14 @@ class PluginManager: PluginManagerDelegate {
         self.config = configuration
         
         webHookManager = WebHookManager(webhooks: configuration.webhooks, sender: sender)
-        router = Router(pluginManager: self, messageDelegates: [webHookManager])
+        router = Router(pluginManager: self, messageDelegates: [webHookManager], configuration: self.config)
         
         loadPlugins()
         addInternalModules()
     }
     
     private func addInternalModules() {
-        modules.append(CoreModule(sender: sender))
+        modules.append(CoreModule(sender: sender, configuration: self.config))
         modules.append(InternalModule(sender: sender, pluginManager: self))
         modules.append(webHookManager)
     }
