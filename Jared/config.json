@@ -8,5 +8,6 @@
     },
     "apiKey": "",
     "organization":"",
-    "allowedSenders": []
+    "allowedSenders": [],
+    "useGPT4": false
 }

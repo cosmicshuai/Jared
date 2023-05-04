@@ -15,6 +15,7 @@ struct ConfigurationFile: Decodable {
     let apiKey: String
     let organization:String
     let allowedSenders: [String]
+    let useGPT4: Bool
     
     init() {
         routes = [:]
@@ -23,6 +24,7 @@ struct ConfigurationFile: Decodable {
         apiKey = ""
         organization = ""
         allowedSenders = []
+        useGPT4 = false
     }
 }
 

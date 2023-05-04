@@ -41,6 +41,7 @@ class CoreModule: RoutingModule {
         let configutation = Configuration(apiKey: self.apiKey, organization: self.org)
         let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: 1)
         let httpClient = HTTPClient(eventLoopGroupProvider: .shared(eventLoopGroup))
+        self.useGPT4 = false
         self.openAIClient = OpenAIKit.Client(httpClient: httpClient, configuration: configutation)
         let appsupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("Jared").appendingPathComponent("CoreModule")
         try! FileManager.default.createDirectory(at: appsupport, withIntermediateDirectories: true, attributes: nil)
@@ -65,6 +66,7 @@ class CoreModule: RoutingModule {
     var apiKey: String
     var org: String
     var openAIClient: OpenAIKit.Client
+    var useGPT4: Bool
     static var chatHistory: [String:[Chat.Message]] = [:]
     
     var persistentContainer: PersistentContainer = {
@@ -83,8 +85,10 @@ class CoreModule: RoutingModule {
         //open ai gpt service
         self.apiKey = configuration.apiKey
         self.org = configuration.organization
+        self.useGPT4 = configuration.useGPT4
         let configutation = Configuration(apiKey: self.apiKey, organization: self.org)
         let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: 1)
+        
         let httpClient = HTTPClient(eventLoopGroupProvider: .shared(eventLoopGroup))
         self.openAIClient = OpenAIKit.Client(httpClient: httpClient, configuration: configutation)
         let appsupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("Jared").appendingPathComponent("CoreModule")
@@ -111,9 +115,9 @@ class CoreModule: RoutingModule {
             history.append(Chat.Message.user(content: message.getTextBody() ?? ""))
             do {
                 let completion = try await self.openAIClient.chats.create(
-                    model: Model.GPT4.gpt4,
+                    model: self.useGPT4 ? Model.GPT4.gpt4 : Model.GPT3.gpt3_5Turbo,
                     messages: history,
-                    maxTokens: 2048
+                    maxTokens: 4096
                 )
                 
                 response = completion.choices[0].message.content

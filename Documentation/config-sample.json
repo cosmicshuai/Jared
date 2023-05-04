@@ -20,9 +20,13 @@
 	          }
 	        }
 	      ]
-	    },
+	    }
 	],
 	"webServer": {
 		"port": 3001
-	}
+	},
+	"apiKey": "",
+    "organization":"",
+    "allowedSenders": ["+7812228212", "testacc@icloud.com"],
+    "useGPT4": false
 }
