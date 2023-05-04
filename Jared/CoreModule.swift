@@ -117,7 +117,7 @@ class CoreModule: RoutingModule {
                 let completion = try await self.openAIClient.chats.create(
                     model: self.useGPT4 ? Model.GPT4.gpt4 : Model.GPT3.gpt3_5Turbo,
                     messages: history,
-                    maxTokens: 4096
+                    maxTokens: 2048
                 )
                 
                 response = completion.choices[0].message.content
