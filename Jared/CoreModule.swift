@@ -108,11 +108,12 @@ class CoreModule: RoutingModule {
     }
     
     func askGPT(_ message: Message) -> Void {
+        let msg = message.getTextBody() ?? ""
         @Sendable func performCompletion() async -> String{
             var response: String = ""
             let handler = message.sender.handle
             var history = CoreModule.chatHistory[handler] ?? []
-            history.append(Chat.Message.user(content: message.getTextBody() ?? ""))
+            history.append(Chat.Message.user(content: msg))
             do {
                 let completion = try await self.openAIClient.chats.create(
                     model: self.useGPT4 ? Model.GPT4.gpt4 : Model.GPT3.gpt3_5Turbo,
@@ -132,6 +133,10 @@ class CoreModule: RoutingModule {
             return response
         }
         
+        
+        if (msg.starts(with: "/clear")) {
+            return
+        }
         // Use a Task to call performCompletion and send the response
         Task {
             let response = await performCompletion()
@@ -140,9 +145,10 @@ class CoreModule: RoutingModule {
     }
 
     func clear(_ incoming: Message) -> Void {
-        var handler = incoming.sender.handle
+        let handler = incoming.sender.handle
         CoreModule.chatHistory[handler] = []
         sender.send(NSLocalizedString("Your chat history has been cleared"), to: incoming.RespondTo())
+        return
     }
     
     func pingCall(_ incoming: Message) -> Void {
